@@ -11,7 +11,7 @@ import SwiftUI
 struct CommandProjectApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            WifiView()
         }
     }
 }
