@@ -20,7 +20,7 @@ struct WifiView: View {
             Image(uiImage: UIImage(named: "Logo")!)
                 .resizable()
                 .frame(width: 200, height: 200)
-            ResultTextView(transferText: $voiceManager.transferText, errorText: $voiceManager.errorMessage)
+            ResultTextView(transferText: $voiceManager.transferText)
             RecordButton()
             Spacer()
                 .frame(height: 30)
@@ -53,7 +53,6 @@ struct WifiView: View {
 struct ResultTextView: View {
     @Environment(\.sizeCategory) var typeSize
     @Binding var transferText: String
-    @Binding var errorText: String
     var body: some View {
         VStack {
             if transferText.isEmpty {
@@ -64,13 +63,6 @@ struct ResultTextView: View {
             } else {
                 Text(transferText)
                     .foregroundColor(.black)
-            }
-            
-            if errorText.isEmpty == false {
-                Text(errorText)
-                    .foregroundColor(.black)
-                    .minimumScaleFactor(0.5)
-                    .font(typeSize == .accessibilityExtraExtraExtraLarge ? .system(size: 20) : .system(size: 20))
             }
         }
     }
@@ -85,18 +77,20 @@ struct RecordButton: View {
                 .frame(width: 70, height: 70)
                 .contentShape(Rectangle())
                 .foregroundColor(isLongPress ? .red : .blue)
-                .onLongPressGesture(minimumDuration: 0.2, perform: {
-                    //
-                }, onPressingChanged: { isPress in
-                    isLongPress = isPress
-                    if isPress {
-                        RecordManager.shared.startRecord()
-                    } else {
-                        RecordManager.shared.stopRecord()
-                    }
-                })
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged({ value in
+                            if !isLongPress {
+                                RecordManager.shared.startRecord()
+                                isLongPress = true
+                            }
+                        })
+                        .onEnded({ value in
+                            RecordManager.shared.stopRecord()
+                            isLongPress = false
+                        })
+                    , isEnabled: true)
                 .padding(.top, 40)
-            Text("Is tap: \(isLongPress)")
         }
     }
 }

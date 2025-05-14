@@ -15,9 +15,7 @@ class RecordManager: ObservableObject {
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "vi-VN"))
     private var voiceRequest: SFSpeechAudioBufferRecognitionRequest?
     private var voiceTask: SFSpeechRecognitionTask?
-    private var isRecording = false
     @Published var transferText: String = ""
-    @Published var errorMessage: String = ""
     
     func startRecord() {
         if voiceTask != nil {
@@ -29,7 +27,6 @@ class RecordManager: ObservableObject {
             try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
-            errorMessage = error.localizedDescription
             return
         }
         
@@ -37,7 +34,6 @@ class RecordManager: ObservableObject {
         
         voiceRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let voiceRequest = voiceRequest else {
-            errorMessage = "ko tạo được voiceRequest"
             return
         }
         voiceRequest.shouldReportPartialResults = true
@@ -45,27 +41,15 @@ class RecordManager: ObservableObject {
         voiceTask = speechRecognizer?.recognitionTask(with: voiceRequest, resultHandler: { [weak self] res, err in
             guard let `self` = self else { return }
             
-            var isFinished = false
-            
             if let res {
                 let textTransfer = res.bestTranscription.formattedString
-                isFinished = res.isFinal
                 print(textTransfer)
                 self.transferText = textTransfer
-                if isFinished, !isRecording {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        Network.shared.sendStringToESP(RecordManager.shared.transferText) { _ in
-                            DispatchQueue.main.async {
-                                RecordManager.shared.transferText = ""
-                            }
-                        }
-                    }
-                }
             }
             
-            if err != nil || isFinished {
-                self.errorMessage = "error reg task \(err?.localizedDescription)"
-                self.stopRecord()
+            if err != nil {
+                self.voiceRequest?.endAudio()
+                self.voiceTask?.cancel()
                 inputNode.removeTap(onBus: 0)
             }
             
@@ -80,9 +64,7 @@ class RecordManager: ObservableObject {
         audioEngine.prepare()
         do {
             try audioEngine.start()
-            isRecording = true
         } catch {
-            errorMessage = "audioEngine start failed with \(error.localizedDescription)"
             return
         }
     }
@@ -93,7 +75,14 @@ class RecordManager: ObservableObject {
         voiceTask?.cancel()
         voiceTask = nil
         voiceRequest = nil
-        isRecording = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            if RecordManager.shared.transferText.isEmpty { return }
+            Network.shared.sendStringToESP(RecordManager.shared.transferText) { _ in
+                DispatchQueue.main.async {
+                    RecordManager.shared.transferText = ""
+                }
+            }
+        }
     }
     
     func checkAudioPermission(onResult: @escaping (Bool) -> Void) {
