@@ -9,6 +9,7 @@ import SwiftUI
 
 // MARK: cần entitlement access wifi infomation
 struct WifiView: View {
+    @Environment(\.sizeCategory) var typeSize
     @State private var isShowToast: Bool = false
     @State private var wifiName: String = ""
     @StateObject private var voiceManager = RecordManager.shared
@@ -24,9 +25,10 @@ struct WifiView: View {
             Spacer()
                 .frame(height: 30)
             Text("PTIT AI CONTROL")
-                .font(.system(size: 25))
                 .fontWeight(.medium)
                 .foregroundColor(.red)
+                .minimumScaleFactor(0.5)
+                .font(typeSize == .accessibilityExtraExtraExtraLarge ? .system(size: 25) : .system(size: 25))
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -49,6 +51,7 @@ struct WifiView: View {
 }
 
 struct ResultTextView: View {
+    @Environment(\.sizeCategory) var typeSize
     @Binding var transferText: String
     @Binding var isShowToast: Bool
     var body: some View {
@@ -56,6 +59,8 @@ struct ResultTextView: View {
             if transferText.isEmpty {
                 Text("Đang chờ lệnh ...")
                     .foregroundColor(.black)
+                    .minimumScaleFactor(0.5)
+                    .font(typeSize == .accessibilityExtraExtraExtraLarge ? .system(size: 20) : .system(size: 20))
             } else {
                 Text(transferText)
                     .foregroundColor(.black)
@@ -65,8 +70,6 @@ struct ResultTextView: View {
 }
 
 struct RecordButton: View {
-    let recordingText = Text(RecordManager.shared.transferText)
-        .foregroundColor(.black)
     @State private var isLongPress = false
     var body: some View {
         VStack {
