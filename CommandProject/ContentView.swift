@@ -20,7 +20,7 @@ struct WifiView: View {
             Image(uiImage: UIImage(named: "Logo")!)
                 .resizable()
                 .frame(width: 200, height: 200)
-            ResultTextView(transferText: $voiceManager.transferText, isShowToast: $isShowToast)
+            ResultTextView(transferText: $voiceManager.transferText, errorText: $voiceManager.errorMessage)
             RecordButton()
             Spacer()
                 .frame(height: 30)
@@ -53,9 +53,9 @@ struct WifiView: View {
 struct ResultTextView: View {
     @Environment(\.sizeCategory) var typeSize
     @Binding var transferText: String
-    @Binding var isShowToast: Bool
+    @Binding var errorText: String
     var body: some View {
-        HStack {
+        VStack {
             if transferText.isEmpty {
                 Text("Đang chờ lệnh ...")
                     .foregroundColor(.black)
@@ -64,6 +64,13 @@ struct ResultTextView: View {
             } else {
                 Text(transferText)
                     .foregroundColor(.black)
+            }
+            
+            if errorText.isEmpty == false {
+                Text(errorText)
+                    .foregroundColor(.black)
+                    .minimumScaleFactor(0.5)
+                    .font(typeSize == .accessibilityExtraExtraExtraLarge ? .system(size: 20) : .system(size: 20))
             }
         }
     }
@@ -89,6 +96,7 @@ struct RecordButton: View {
                     }
                 })
                 .padding(.top, 40)
+            Text("Is tap: \(isLongPress)")
         }
     }
 }

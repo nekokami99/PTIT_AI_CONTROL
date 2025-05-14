@@ -17,11 +17,11 @@ class RecordManager: ObservableObject {
     private var voiceTask: SFSpeechRecognitionTask?
     private var isRecording = false
     @Published var transferText: String = ""
+    @Published var errorMessage: String = ""
     
     func startRecord() {
         if voiceTask != nil {
-            voiceTask?.cancel()
-            voiceTask = nil
+            stopRecord()
         }
         
         let audioSession = AVAudioSession.sharedInstance()
@@ -29,6 +29,7 @@ class RecordManager: ObservableObject {
             try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
+            errorMessage = error.localizedDescription
             return
         }
         
@@ -36,6 +37,7 @@ class RecordManager: ObservableObject {
         
         voiceRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let voiceRequest = voiceRequest else {
+            errorMessage = "ko tạo được voiceRequest"
             return
         }
         voiceRequest.shouldReportPartialResults = true
@@ -62,9 +64,8 @@ class RecordManager: ObservableObject {
             }
             
             if err != nil || isFinished {
-                self.audioEngine.stop()
-                self.voiceTask = nil
-                self.voiceRequest = nil
+                self.errorMessage = "error reg task \(err?.localizedDescription)"
+                self.stopRecord()
                 inputNode.removeTap(onBus: 0)
             }
             
@@ -81,6 +82,7 @@ class RecordManager: ObservableObject {
             try audioEngine.start()
             isRecording = true
         } catch {
+            errorMessage = "audioEngine start failed with \(error.localizedDescription)"
             return
         }
     }
@@ -88,6 +90,9 @@ class RecordManager: ObservableObject {
     func stopRecord() {
         audioEngine.stop()
         voiceRequest?.endAudio()
+        voiceTask?.cancel()
+        voiceTask = nil
+        voiceRequest = nil
         isRecording = false
     }
     
