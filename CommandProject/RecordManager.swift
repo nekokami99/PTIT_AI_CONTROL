@@ -75,14 +75,6 @@ class RecordManager: ObservableObject {
         voiceTask?.cancel()
         voiceTask = nil
         voiceRequest = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            if RecordManager.shared.transferText.isEmpty { return }
-            Network.shared.sendStringToESP(RecordManager.shared.transferText) { _ in
-                DispatchQueue.main.async {
-                    RecordManager.shared.transferText = ""
-                }
-            }
-        }
     }
     
     func checkAudioPermission(onResult: @escaping (Bool) -> Void) {

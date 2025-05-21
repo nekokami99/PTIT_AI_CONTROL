@@ -13,6 +13,7 @@ struct WifiView: View {
     @State private var isShowToast: Bool = false
     @State private var wifiName: String = ""
     @StateObject private var voiceManager = RecordManager.shared
+    @State private var ip: String = ""
     var body: some View {
         VStack(spacing: 30) {
             Spacer()
@@ -20,8 +21,13 @@ struct WifiView: View {
             Image(uiImage: UIImage(named: "Logo")!)
                 .resizable()
                 .frame(width: 200, height: 200)
+            TextField("Nhập ip của thiết bị", text: $ip)
+                .frame(width: 300, height: 40)
+                .background(Color.white)
+                .cornerRadius(20)
+                .textFieldStyle(.roundedBorder)
             ResultTextView(transferText: $voiceManager.transferText)
-            RecordButton()
+            RecordButton(ip: $ip)
             Spacer()
                 .frame(height: 30)
             Text("PTIT AI CONTROL")
@@ -70,6 +76,7 @@ struct ResultTextView: View {
 
 struct RecordButton: View {
     @State private var isLongPress = false
+    @Binding var ip: String
     var body: some View {
         VStack {
             Image(systemName: "mic.circle.fill")
@@ -86,8 +93,17 @@ struct RecordButton: View {
                             }
                         })
                         .onEnded({ value in
+                            print("nxb end")
                             RecordManager.shared.stopRecord()
                             isLongPress = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                if RecordManager.shared.transferText.isEmpty { return }
+                                Network.shared.sendStringToESP(ip: ip, message: RecordManager.shared.transferText) { _ in
+                                    DispatchQueue.main.async {
+                                        RecordManager.shared.transferText = ""
+                                    }
+                                }
+                            }
                         })
                     , isEnabled: true)
                 .padding(.top, 40)

@@ -12,7 +12,7 @@ import SystemConfiguration.CaptiveNetwork
 
 class Network {
     static let shared = Network()
-    func sendStringToESP(_ message: String, onResult: @escaping (Bool) -> Void) {
+    func sendStringToESP(ip: String, message: String, onResult: @escaping (Bool) -> Void) {
         let formatter = NumberFormatter()
             formatter.locale = Locale(identifier: "vi-VN") // Hoặc ngôn ngữ của bạn
             formatter.numberStyle = .spellOut
@@ -37,7 +37,8 @@ class Network {
         
         let final = words.joined(separator: "_")
         
-        let espIP = "http://esp32.local/\(final)" // Thay bằng IP thật của ESP32
+        let espIP = "http://\(ip.isEmpty ? "esp32.local" : ip)/\(final)" // Thay bằng IP thật của ESP32
+        print("Sending to \(espIP): \(final)")
         var request = URLRequest(url: URL(string: espIP)!)
         request.httpMethod = "GET"
         request.timeoutInterval = 10
