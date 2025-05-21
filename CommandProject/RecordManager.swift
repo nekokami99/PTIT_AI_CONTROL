@@ -27,6 +27,7 @@ class RecordManager: ObservableObject {
             try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
+            print("Lỗi thiết lập audio session: \(error.localizedDescription)")
             return
         }
         
@@ -56,6 +57,8 @@ class RecordManager: ObservableObject {
         })
         
         let recordingFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.reset()
+        inputNode.removeTap(onBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
             self.voiceRequest?.append(buffer)
         }
@@ -65,6 +68,7 @@ class RecordManager: ObservableObject {
         do {
             try audioEngine.start()
         } catch {
+            print("Lỗi khi khởi động audio engine: \(error.localizedDescription)")
             return
         }
     }
