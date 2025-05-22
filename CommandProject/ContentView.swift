@@ -40,9 +40,8 @@ struct WifiView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.green)
         .onAppear {
-            PermissionManager.shared.getCurrrentWifi { wifiName in
-                print("wifi name: \(wifiName)")
-                self.wifiName = wifiName
+            Network.shared.sendStringToESP(ip: "", message: "") { _ in
+                //
             }
             
             voiceManager.checkAudioPermission { isGranted in
